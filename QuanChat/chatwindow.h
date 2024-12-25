@@ -33,7 +33,7 @@ private:
     QTcpSocket *sock;
     QString friendName,friendHead,myName;
     QString chatContentNow;
-signals://信号只需要定义不需要实现
+signals: // Signals only need to be defined, no implementation is required
     void closeSig();
 };
 
