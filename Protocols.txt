@@ -1,0 +1,150 @@
+Protocol
+
+Registration:
+client->server   #01|uName|password
+server->client
+    Username already exists: #01|1
+    Registration successful: #01|0
+
+Login:
+client->server   #02|uName|password
+server->client
+    Username does not exist: #02|1
+    Incorrect password: #02|2
+    Logged in elsewhere, you have been logged out:
+        server->client (previous login): #02|3 (the previous user must send an empty message)
+        server->client (new login): #02|4 (the new user must retry)
+    Login successful: #02|0|head(0-13)
+
+Add Friend:
+client->server   #03|User_want_to_add
+server->client   #03|1    Invalid connection
+                 #03|2    User does not exist
+                 #03|3    Already friends
+                 #03|0    Added successfully
+
+Send Message:
+client1->server  #04|ToUserName|messageTime|Message
+server->client1  Sent successfully: #04|0
+                 Invalid connection: #04|1
+                 User does not exist: #04|2
+                 Not friends: #04|3
+server->client2  #04|4|who_sent_it|Time|text
+
+Open Chat Window:
+client->server   #05|who_to_chat
+server->client   #05|0|messageTime|message or #05|1 for invalid connection
+client->server   #05|who_to_chat
+... and so on ...
+server->client   #05|2  End of transmission
+
+View Friend List:
+client->server   #06|0
+server->client   #06|0|x|friendName|imgNo|nMessages (or #06|1 for invalid connection)
+                 ps: (x == 1, friend is online, otherwise offline) nMessages indicates the number of unread messages.
+client->server   #06|1 (requesting the next friend's info)
+server->client   #06|0|x|friendName|imgNo|nMessages (next piece of info)
+client->server   #06|1 (requesting the next friend's info)
+...
+server->client   #06|2 (no more info)
+
+Delete Friend:
+client->server   #07|userToBeDeleted
+server->client   #07|1    Invalid connection
+                 #07|0    Successfully deleted
+
+Delete Account:
+client->server   #08
+server->client   #08|1    Invalid connection
+                 #08|0    Successfully deleted account
+
+Set Avatar:
+client->server   #09|imageNumber
+server->client   #09|1    Invalid connection
+                 #09|0    Successfully set avatar
+
+Close Chat Window:
+client->server   #10|whoToClose
+server->client   #10|1    Invalid connection
+                 #10|0    Closed successfully
+
+Send File:
+1. sender->server: #11|0|receiverUserName|messageTime|fileName
+2. server->receiver: #11|5|senderUserName|messageTime|fileName
+3. receiver->server: #11|2|senderUserName (fileName received)
+4. server->sender: #11|0|receiverUserName (success)
+5. sender->server: #11|1|receiverUserName(64)|messageTime(20)|nCurrent(11)|nTotal(11)|nValid(11)|bytesInFile(1-4194176)
+                   ^ ^                    ^               ^            ^          ^          ^
+                   | |                    |               |            |          |          |
+                   4 6                    71              92          104        116        128
+6. server->receiver: #11|6|senderUserName(64)|messageTime(20)|nCurrent(11)|nTotal(11)|nValid(11)|bytesInFile(1-4194176)
+                     ^ ^                    ^               ^            ^          ^          ^
+                     | |                    |               |            |          |          |
+                     4 6                    71              92          104        116        128
+7. receiver->server: #11|2|senderUserName (fileContent received)
+8. server->sender: #11|0|receiverUserName (success) (repeat step 5 until the file is fully sent)
+
+nCurrent: Current message segment number
+nTotal: Total number of message segments
+nValid: Valid bytes starting from req[128] (1 <= nValid <= 4194176) (4194176 == 2^22 - 2^7)
+
+Errors:
+server->client (sender or receiver):
+#11|0    Sent successfully
+#11|1    Invalid connection
+#11|2    User does not exist
+#11|3    Not friends: Cannot send files
+#11|4    Friend is offline
+
+Create Group Chat:
+client->server   #12|groupId
+server->client   #12|1    Invalid connection
+                 #12|2    Group ID already taken
+                 #12|0    Group created successfully
+
+Request to Join Group:
+client->server   #13|groupId
+server->client   #13|1    Invalid connection
+                 #13|2    Group does not exist
+                 #13|3    Already in group
+                 #13|0    Request successful
+
+Send Group Message:
+client1->server  #14|groupId|messageTime|Message
+server->client1
+                 #14|0    Sent successfully
+                 #14|1    Invalid connection
+server->clientx
+                 #14|2|groupId|FromWhom|Time|Message
+
+View Group List:
+client->server   #15|0
+server->client   #15|0|groupName|nMessages (or #15|1 Invalid connection)
+client->server   #15|1 (request next group info)
+server->client   #15|0|groupName|nMessages (next group info)
+...
+server->client   #15|2 End of group list
+
+Open Group Chat Window:
+client->server   #16|groupId
+server->client   #16|0|whoSentIt|Time|Message
+                 #16|1 Invalid connection
+                 #16|2 End of transmission
+client->server   #16|groupId
+... and so on ...
+
+Close Group Chat Window:
+client->server   #17|groupIdToClose
+server->client   #17|0    Success
+                 #17|1    Invalid connection
+
+Request Group Member Info:
+client->server   #18|0|GroupId
+server->client   #18|0|isOnline|friendName|imgNo|isGroupOwner (or #18|1 Invalid connection)
+client->server   #18|1|GroupId (request next piece of member info)
+...
+server->client   #18|2 (no more info)
+
+Error:
+Database error:
+server->client   #99|1
