@@ -16,7 +16,7 @@ class createGroup : public QMainWindow
 
 public:
     explicit createGroup(QWidget *parent = 0);
-    explicit createGroup(QTcpSocket *s,QWidget *parent = 0);//此处需要传入主界面的socket函数sock
+    explicit createGroup(QTcpSocket *s,QWidget *parent = 0); // The socket function 'sock' from the main interface needs to be passed here
     ~createGroup();
     bool justChineseOrEnglishOrNumber(QString &qstr);
 private slots:
@@ -30,7 +30,7 @@ private slots:
 private:
     Ui::createGroup *ui;
     QTcpSocket *sock;
-signals://信号只需要定义不需要实现
+signals:// Signals only need to be defined, no need for implementation
     void closeSig();
 };
 
