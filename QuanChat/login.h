@@ -21,7 +21,7 @@ public:
     explicit login(QWidget *parent = 0);
     ~login();
 
-private slots://槽函数单独声明
+private slots:// Slot functions are declared separately
     void handConnected();
     void handRead();
     void handHide();
