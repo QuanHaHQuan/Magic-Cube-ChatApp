@@ -16,7 +16,7 @@ chatWindow::chatWindow(QTcpSocket *s,QString mName,QString fName,QString fHead,Q
     ui->setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);
     sock=s;
-    //显示好友头像和信息
+    // Display friend's avatar and information
     friendName=fName;
     friendHead=fHead;
     myName=mName;
@@ -31,14 +31,14 @@ chatWindow::~chatWindow()
 
 void chatWindow::on_fileSend_clicked()
 {
-    //跳转到传输文件界面
+    // Navigate to file transfer interface
 }
 
 void chatWindow::on_returnButton_clicked()
 {
     this->hide();
     disconnect(sock,SIGNAL(readyRead()),0,0);
-    emit closeSig();//触发信号，返回
+    emit closeSig();// Trigger signal, return
 }
 
 void chatWindow::handRecv()
@@ -46,14 +46,14 @@ void chatWindow::handRecv()
     QByteArray rData=sock->readAll();
     QString recvStr(rData);
     /*
-     * 发送成功#03|0
-     * 对方不在线发送失败：#03|1
-     * 收到消息#03|who_sent_it|text
+     * Send success #03|0
+     * Other party is offline, send failed: #03|1
+     * Received message #03|who_sent_it|text
     */
     QStringList rList=recvStr.split('|');
     if(rList[1]=="1")
     {
-        QMessageBox::warning(this,"警告","对方不在线，发送失败！");
+        QMessageBox::warning(this,"Warning","The other party is offline, sending failed!");
     }
     if(rList[1]=="0")
     {
@@ -73,7 +73,7 @@ void chatWindow::on_sendMessage_clicked()
     chatTem.toUtf8();
     if(chatTem.length()>4095)
     {
-        QMessageBox::warning(this,"发送失败","单次发送内容过长！");
+        QMessageBox::warning(this,"Send Failed","The content to send is too long!");
     }
     else//#03|send_to_whom|text
     {
@@ -81,6 +81,6 @@ void chatWindow::on_sendMessage_clicked()
         qDebug()<<sendChatContent;
         sendChatContent.toStdString().c_str();
         sock->write(sendChatContent.toUtf8());
-        chatContentNow=chatContent;//保存当前发送的内容
+        chatContentNow=chatContent;// Save the current sent content
     }
 }
