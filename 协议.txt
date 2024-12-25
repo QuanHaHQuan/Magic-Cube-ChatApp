@@ -1,0 +1,157 @@
+协议
+
+注册：
+client->server	#01|uName|password
+server->client
+	用户名已存在：#01|1
+	注册成功：#01|0
+
+登录：
+client->server	#02|uName|password
+server->client
+	用户名不存在：#02|1
+	密码错误：#02|2
+	其他地方登录，您被顶下线：
+		server->client（先登录者）：#02|3（先登录者须回空消息）
+		server->client（后登录者）：#02|4（后登录者须重试）
+	登录成功：#02|0|head(0-13)
+
+加好友：
+client->server	#03|User_want_to_add
+server->client	#03|1	 非法连接
+		#03|2        用户不存在
+                                #03|3        已经是好友
+		#03|0        添加成功
+
+发送消息：//改时间
+client1->server：	#04|ToUserName|messageTime|Message
+server->client1：	发送成功：#04|0
+		非法连接：#04|1
+		用户不存在：#04|2
+		不是好友：#04|3
+server->client2：	#04|4|who_sent_it|Time|text
+
+打开对话框
+client->server: #05|who_to_chat
+server->client: #05|0|messageTime|message or #05|1 for invalid connection
+client->server: #05|who_to_chat
+ ......and so on
+server->client: #05|2  end of transmission
+
+查看好友列表：
+client->server:#06|0
+server->client:#06|0|x|friendName|imgNo|nMessages (or #06|1 for invalid connection) ps: (x==1,friend is online,vise versa) nMessages stands for n messages
+client->server:#06|1 (for next piece of friend info)
+server->client:#06|0|x|friendName|imgNo|nMessages (next piece of info)
+client->server:#06|1 (for next piece of friend info)
+............
+// server->client:#06|2 (no more info)
+
+删好友:
+client->server:	#07|userToBeDeleted
+server->client:	#07|1	非法连接
+		#07|0	删除成功
+
+注销账户
+client->server：	#08
+server->client:	#08|1	非法连接
+		#08|0	注销成功
+
+设置头像
+client->server:	#09|imageNumber
+server->client:	#09|1	非法连接
+		#09|0	设置成功
+
+关闭聊天窗
+client->server	#10|whoToClose
+server->client	#10|1	非法连接
+		#10|0	关闭成功
+
+发送文件
+1.sender->server: #11|0|receiverUserName|messageTime|fileName
+2.server->receiver: #11|5|senderUserName|messageTime|fileName
+3.receiver->server: #11|2|senderUserName (fileName received)
+4.server->sender: #11|0|receiverUserName (success)
+5.sender->server: #11|1|receiverUserName(64)|messageTime(20)|nCurrent(11)|nTotal(11)|nValid(11)|bytesInFile(1-4194176)
+                      ^ ^                    ^               ^            ^          ^          ^
+                      | |                    |               |            |          |          |
+                      4 6                    71              92          104        116        128
+6.server->receiver: #11|6|senderUserName(64)|messageTime(20)|nCurrent(11)|nTotal(11)|nValid(11)|bytesInFile(1-4194176)
+                        ^ ^                  ^               ^            ^          ^          ^
+                        | |                  |               |            |          |          |
+                        4 6                  71              92          104        116        128
+7.receiver->server: #11|2|senderUserName (fileContent received)
+8.server->sender: #11|0|receiverUserName (success)                    (goto 5. until the file is successfully sent)
+
+nCurrent: 当前消息片段数
+nTotal: 消息总片段数
+nValid: 从req[128]开始的有效字节数 (1 <= nValid <= 4194176) (4194176 == 2^22 - 2^7)
+
+errors:
+server->client (sender or receiver):
+#11|0                  发送成功
+#11|1                  非法连接
+#11|2                  用户不存在
+#11|3                  不是好友：无法发送文件
+#11|4                  好友不在线
+
+创建群聊
+client->server	#12|groupId
+server->client	#12|1 非法链接
+                #12|2 群Id已被占用
+		        #12|0 群创建成功
+
+申请入群
+client->server	#13|groupId
+server->client	#13|1 非法链接
+                #13|2 群聊不存在
+		        #13|3 已经在群内
+		        #13|0 申请成功
+
+在群内发消息
+client1->server	#14|groupId|messageTime|Message
+server->client1
+		#14|0 发送成功
+		#14|1 非法连接
+
+server->clientx
+		#14|2|groupId|FromWhom|Time|Message
+
+返回群列表
+#15
+client->server:#15|0
+(db stores group information into a temp table)
+server->client:#15|0|groupName|nMessages (or #15|1 无效连接)
+client->server:#15|1 (请求下一条群信息)
+server->client:#15|0|groupName|nMessages (下一条群信息)
+client->server:#15|1 (请求下一条群信息)
+............
+server->client:#15|2 消息查询完毕
+
+打开群聊天窗
+client->server  #16|groupId
+server->client  #16|0|whoSentIt|Time|Message
+                #16|1 invalid connection
+                #16|2 end of transmission
+client->server: #16|groupId
+......and so on
+
+关闭群聊天窗
+client->server   #17|groupIdToClose
+server->client   #17|0    success
+                 #17|1 非法连接
+请求群成员信息
+#18
+client->server:#18|0|GroupId
+(db stores friend information into a temp table)
+server->client:#18|0|isOnline|friendName|imgNo|isGroupOwner (or #18|1 for invalid connection)
+client->server:#18|1|GroupId (for next piece of friend info)
+server->client:#18|0|isOnline|friendName|imgNo|isGroupOwner (next piece of info)
+client->server:#18|1|GroupId (for next piece of friend info)
+............
+server->client:#18|2 (no more info)
+
+
+各种报错：
+数据库错误
+server->client:	#99|1

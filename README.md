@@ -1,21 +1,21 @@
-# Magic-Cube-ChatApp
+# Magic Cube-ChatApp
+
+#### 介绍
 This is an implementation of a real-time chatting app like QQ, WeChat or WhatsApp, it supports following functions: add/delete friends, create groups, send files, edit personal profile, etc.
 
-## Introduction
-This is an implementation of a real-time chatting app similar to QQ, WeChat, or WhatsApp. It supports the following features: adding/deleting friends, creating groups, sending files, editing personal profiles, and more.
+#### 软件架构
+本软件基于Linux系统和Socket 通讯，主要使用C语言。
 
-## Software Architecture
-This software is based on the Linux operating system and utilizes Socket communication, primarily developed in C.
+#### 使用说明
 
-## Usage Instructions
+1.  在服务器端运行server.c
+2.  在客户端运行client.c
+3.  Quanchat文件夹中包含图形化界面
 
-* Run server.c on the server side.
-* Run client.c on the client side.
-* The Quanchat folder includes the graphical user interface.
+#### 参与贡献
 
-## Contributing
+1.  Fork 本仓库
+2.  新建 Feat_xxx 分支
+3.  提交代码
+4.  新建 Pull Request
 
-* Fork this repository.
-* Create a new branch named Feat_xxx.
-* Commit your code.
-* Open a new Pull Request.
